@@ -25,6 +25,12 @@ public class SessionManager : NetworkBehaviour
 
     private Dictionary<ulong, Character> _characters = new Dictionary<ulong, Character>();
 
+    private static Role _role = Role.Client; public static Role role { get { return _role; } set { _role = value; } }
+
+    public enum Role
+    {
+        Server = 1, Client = 2
+    }
     public void StartServer()
     {
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
