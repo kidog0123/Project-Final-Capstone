@@ -106,6 +106,8 @@ namespace StarterAssets
         
         private float targetSpeed = 2f;
 
+        private bool _initialized = false;
+
         
         private bool IsCurrentDeviceMouse
         {
@@ -135,29 +137,48 @@ namespace StarterAssets
             _input = GetComponent<StarterAssetsInputs>();
 
             _playerInput = GetComponent<PlayerInput>();
-
-            if(!_character.IsOwner)
-            {
-                Destroy(this);
-                Destroy(_playerInput);
-                Destroy(_input);
-                Destroy(_controller);
-                return;
-            }
-            _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
-
-            AssignAnimationIDs();
-
-            _mainCamera = CameraManager.mainCamera.gameObject;
-            CameraManager.playerCamera.m_Follow = CinemachineCameraTarget.transform;
-            CameraManager.aimingCamera.m_Follow = CinemachineCameraTarget.transform;
-
-            // reset our timeouts on start
-            _jumpTimeoutDelta = JumpTimeout;
+            
         }
+
+        private void DestroyControllers()
+        {
+            Destroy(this);
+            Destroy(_playerInput);
+            Destroy(_input);
+            Destroy(_controller);
+        }
+
 
         private void Update()
         {
+            if(_initialized == false)
+            {
+                if(_character.IsOwner) 
+                {
+                    _cinemachineTargetYaw = CinemachineCameraTarget.transform.rotation.eulerAngles.y;
+
+                    AssignAnimationIDs();
+
+                    _mainCamera = CameraManager.mainCamera.gameObject;
+                    CameraManager.playerCamera.m_Follow = CinemachineCameraTarget.transform;
+                    CameraManager.aimingCamera.m_Follow = CinemachineCameraTarget.transform;
+
+                    // reset our timeouts on start
+                    _jumpTimeoutDelta = JumpTimeout;
+
+                    _initialized = true;
+                }
+                else
+                {
+                    if(_character.clientID > 0)
+                    {
+                        DestroyControllers();
+                    }
+                    return;
+                }
+
+            }
+
             bool armed = _character.weapon != null;
             if (armed)
             {
@@ -165,9 +186,6 @@ namespace StarterAssets
 
             }
             _character.sprinting = _input.sprint && _character.aiming == false;
-        
-
-            
 
             JumpAndGravity();
             //GroundedCheck();
@@ -233,7 +251,14 @@ namespace StarterAssets
 
             if(_input.inventory)
             {
-                CanvasManager.singleton.OpenInventory();
+                if(CanvasManager.singleton.isInventoryOpen)
+                {
+                    CanvasManager.singleton.CloseInventory();
+                }
+                else
+                {
+                    CanvasManager.singleton.OpenInventory();
+                }
                 _input.inventory = false;
             }
 
@@ -294,6 +319,10 @@ namespace StarterAssets
 
         private void LateUpdate()
         {
+            if(_initialized == false)
+            {
+                return;
+            }
             CameraRotation();
         }
 

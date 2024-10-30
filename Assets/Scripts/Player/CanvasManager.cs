@@ -6,9 +6,7 @@ using TMPro;
 
 public class CanvasManager : MonoBehaviour
 {
-    [SerializeField] private Button _serverButton = null;
-    [SerializeField] private Button _clientButton = null;
-
+   
 
     [Header("Player UI")]
     [SerializeField] public TextMeshProUGUI _playerName = null;
@@ -85,8 +83,6 @@ public class CanvasManager : MonoBehaviour
     }
     private void Start()
     {
-        _serverButton.onClick.AddListener(StartServer);
-        _clientButton.onClick.AddListener(StartClient);
         _inventoryCloseButton.onClick.AddListener(CloseInventory);
 
 
@@ -155,20 +151,7 @@ public class CanvasManager : MonoBehaviour
 
 
     }
-    private void StartServer()
-    {
-        _serverButton.gameObject.SetActive(false);
-        _clientButton.gameObject.SetActive(false);
-        SessionManager.singleton.StartServer();
-    
-    }
 
-    private void StartClient()
-    {
-        _serverButton.gameObject.SetActive(false);
-        _clientButton.gameObject.SetActive(false);
-        SessionManager.singleton.StartClient();
-    }
 
     private void OnItemToPickUpdated()
     {
@@ -198,7 +181,7 @@ public class CanvasManager : MonoBehaviour
         }
     }
 
-    private void CloseInventory()
+    public void CloseInventory()
     {
         if (_isInventoryOpen == false)
         {
@@ -266,10 +249,10 @@ public class CanvasManager : MonoBehaviour
 
             for(int i = 0; i < Character.localPlayer.inventory.Count; i++)
             {
-                //if (Character.localPlayer.inventory[i].GetType() != typeof(Weapon) && Character.localPlayer.inventory[i].GetAmount() <= 0)
-                //{
-                //    continue;
-                //}
+                if (Character.localPlayer.inventory[i].GetType() != typeof(Weapon) && Character.localPlayer.inventory[i].GetAmount() <= 0)
+                {
+                    continue;
+                }
                 InventoryItem item = Instantiate(_inventoryItemPrefab, _inventoryGrid1);
                 item.Initialize(Character.localPlayer.inventory[i]);
                 _inventoryItems1.Add(item);
@@ -295,20 +278,20 @@ public class CanvasManager : MonoBehaviour
             _inventoryGridTitle2.text = "Player" + lootTarget.clientID.ToString();
             for (int i = 0; i < Character.localPlayer.inventory.Count; i++)
             {
-                //if (Character.localPlayer.inventory[i].GetType() != typeof(Weapon) && Character.localPlayer.inventory[i].GetAmount() <= 0)
-                //{
-                //    continue;
-                //}
+                if (Character.localPlayer.inventory[i].GetType() != typeof(Weapon) && Character.localPlayer.inventory[i].GetAmount() <= 0)
+                {
+                    continue;
+                }
                 InventoryItem item = Instantiate(_inventoryItemPrefab, _inventoryGrid1);
                 item.Initialize(Character.localPlayer.inventory[i]);
                 _inventoryItems1.Add(item);
             }
             for (int i = 0; i < _characterLootTarget.inventory.Count; i++)
             {
-                //if (_characterLootTarget.inventory[i].GetType() != typeof(Weapon) && _characterLootTarget.inventory[i].GetAmount() <= 0)
-                //{
-                //    continue;
-                //}
+                if (_characterLootTarget.inventory[i].GetType() != typeof(Weapon) && _characterLootTarget.inventory[i].GetAmount() <= 0)
+                {
+                    continue;
+                }
                 InventoryItem item = Instantiate(_inventoryItemPrefab, _inventoryGrid2);
                 item.Initialize(_characterLootTarget.inventory[i]);
                 _inventoryItems2.Add(item);
