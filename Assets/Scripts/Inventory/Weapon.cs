@@ -10,7 +10,7 @@ public class Weapon : Item
     [SerializeField] private string _ammoID = ""; public string ammoID { get { return _ammoID; } }
     [SerializeField] private float _damage; // sát thương
     [SerializeField] private float _fireRate; // tốc độ bắn
-    [SerializeField] private int _clipSize = 30; public int clipSize { get { return _clipSize; } }
+    [SerializeField] private int _clipSize = 30; public int clipSize { get { return _clipSize; } } //Số lượng đạn tối đa
 
     [SerializeField] private float _handKick = 5f; public float handKick { get { return _handKick; } }
     [SerializeField] private float _bodyKick = 5f; public float bodyKick { get { return _bodyKick; } }

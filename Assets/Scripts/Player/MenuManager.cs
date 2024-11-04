@@ -78,7 +78,7 @@ public class MenuManager : MonoBehaviour
     {
         _startingMatch = true;
         RealtimeNetworking.Disconnect();
-        //SessionManager.port = (ushort)port;
+        SessionManager.port = (ushort)port;
         if (gameData.mapID == 0)
         {
             SceneManager.LoadScene(1);

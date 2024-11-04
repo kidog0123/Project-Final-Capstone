@@ -1,15 +1,23 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using LitJson;
 using UnityEngine.TextCore.Text;
 using UnityEditor;
+using Unity.Netcode.Transports.UTP;
+using DevelopersHub.RealtimeNetworking.Client;
+
 
 
 public class SessionManager : NetworkBehaviour
 {
-
+    private float _destroyServerAfterSecondsIfNoClientConnected = 300;
+    private float _destroyServerAfterSecondsWithoutAnyClient = 120;
+    private float _timer = 0;
+    private int _connectedClients = 0;
+    private bool _atLeastOneClientConnected = false;
+    private bool _closingServer = false;
     private static SessionManager _singleton = null;
     public static SessionManager singleton
     {
@@ -26,16 +34,71 @@ public class SessionManager : NetworkBehaviour
     private Dictionary<ulong, Character> _characters = new Dictionary<ulong, Character>();
 
     private static Role _role = Role.Client; public static Role role { get { return _role; } set { _role = value; } }
+    private static ushort _port = 0; public static ushort port { get { return _port; } set { _port = value; } }
+    private static long _accountID = 0; public static long accountID { get { return _port; } set { _accountID = value; } }
 
     public enum Role
     {
         Server = 1, Client = 2
     }
+
+
+    private void Start()
+    {
+        UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
+        transport.ConnectionData.Address = Client.instance.settings.ip;
+        if (role == Role.Server)
+        {
+            _port = (ushort)DevelopersHub.RealtimeNetworking.Client.Tools.FindFreeTcpPort();
+            transport.ConnectionData.Port = _port;
+            StartServer();
+        }
+        else
+        {
+            transport.ConnectionData.Port = _port;
+            StartClient();
+        }
+    }
+    private void Update()
+    {
+        if (role == Role.Server)    
+        {
+            if (_closingServer)
+            {
+                return;
+            }
+            if (_atLeastOneClientConnected) //nếu có ít nhất 1 client đã kết nối với server
+            {
+                if (_connectedClients > 0) //nếu hiện có client kết nối server thì ko cần đếm thời gian
+                {
+                    _timer = 0;
+                }
+                else                     // nếu chưa thì đếm thời gian
+                {                       // hết thời gian mà ko có client kết nối thì hủy server
+                    _timer += Time.deltaTime;
+                    if (_timer >= _destroyServerAfterSecondsWithoutAnyClient) 
+                    {
+                        CloseServer();
+                    }
+                }
+            }
+            else //nếu chưa có client nào kết nối với server thì bắt đầu đếm thời gian
+            {   // hết thời gian mà không có client kết nối thì hủy server
+                _destroyServerAfterSecondsIfNoClientConnected -= Time.deltaTime;        
+                if (_destroyServerAfterSecondsIfNoClientConnected <= 0)
+                {
+                    CloseServer();
+                }
+            }
+        }
+    }
     public void StartServer()
     {
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        //NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+       
         NetworkManager.Singleton.StartServer();
+
         Item[] allItems = FindObjectsByType<Item>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
         if (allItems != null)
@@ -45,14 +108,34 @@ public class SessionManager : NetworkBehaviour
                 allItems[i].ServerInitialize();
             }
         }
+        StartCoroutine(InformClients());
     }
-    //private void OnClientDisconnect(ulong clientId)
-    //{
-    //    _characters.Remove(clientId);
-    //}
+    private void OnClientDisconnect(ulong clientId)
+    {
+        _connectedClients--;
+    }
+    private IEnumerator InformClients()
+    {
+        yield return new WaitForEndOfFrame();
+        yield return new WaitForSeconds(2f);
+        RealtimeNetworking.NetcodeServerIsReady(_port);
+    }
+    private void CloseServer()
+    {
+        if (_role == Role.Server)
+        {
+            if (_closingServer)
+            {
+                return;
+            }
+            _closingServer = true;
+            RealtimeNetworking.NetcodeCloseServer();
+        }
+    }
     private void OnClientConnected(ulong clientId)
     {
-
+        _connectedClients++;
+        _atLeastOneClientConnected = true;
         ulong[] target = new ulong[1];
         target[0] = clientId;
         ClientRpcParams clientRpcParams = default;
@@ -75,12 +158,12 @@ public class SessionManager : NetworkBehaviour
             Vector3 position = new Vector3(Random.Range(-5,5),0f,Random.Range(-5,5));
 
             Character character = Instantiate(prefab,position,Quaternion.identity);
-            character.GetComponent<NetworkObject>().SpawnWithOwnership(serverRpcParams.Receive.SenderClientId);
+            character.GetComponent<Unity.Netcode.NetworkObject>().SpawnWithOwnership(serverRpcParams.Receive.SenderClientId);
 
             _characters.Add(serverRpcParams.Receive.SenderClientId, character);
 
 
-            Dictionary<string,(string,int)> items = new Dictionary<string,(string,int)> { {"0",( "QBZ95", 30) }, { "1", ("AK74", 1) }, { "2", ("7.62x39mm", 2000) } };
+            Dictionary<string,(string,int)> items = new Dictionary<string,(string,int)> { {"0",( "QBZ95", 0) }, { "1", ("AK74", 0) }, { "2", ("7.62x39mm", 2000) } };
             List<string> itemsId = new List<string>();
             List<string> equippedIds = new List<string>();
 
