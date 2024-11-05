@@ -187,7 +187,7 @@ public class Character : NetworkBehaviour
         _initialized = true;
         InitializeCompoments();
         _clientID = clientID;
-        Tools.SetLayerMask(transform, LayerMask.NameToLayer("NetworkPlayer"));
+        Functions.SetLayerMask(transform, LayerMask.NameToLayer("NetworkPlayer"));
 
         _Initialize(items, itemsId,equippedIds);
     }
@@ -202,13 +202,13 @@ public class Character : NetworkBehaviour
         _clientID = clientID;
         if(IsOwner)
         {
-            Tools.SetLayerMask(transform, LayerMask.NameToLayer("LocalPlayer"));
+            Functions.SetLayerMask(transform, LayerMask.NameToLayer("LocalPlayer"));
             localPlayer = this;
 
         }
         else
         {
-            Tools.SetLayerMask(transform, LayerMask.NameToLayer("NetworkPlayer"));
+            Functions.SetLayerMask(transform, LayerMask.NameToLayer("NetworkPlayer"));
         }
 
         Dictionary<string, (string, int)> items = JsonMapper.ToObject<Dictionary<string, (string, int)>>(itemsJson);
@@ -290,12 +290,12 @@ public class Character : NetworkBehaviour
         _clientID = clientID;
         if (IsOwner)
         {
-            Tools.SetLayerMask(transform, LayerMask.NameToLayer("LocalPlayer"));
+            Functions.SetLayerMask(transform, LayerMask.NameToLayer("LocalPlayer"));
             localPlayer = this;
         }
         else
         {
-            Tools.SetLayerMask(transform, LayerMask.NameToLayer("NetworkPlayer"));
+            Functions.SetLayerMask(transform, LayerMask.NameToLayer("NetworkPlayer"));
         }
         Data data = JsonMapper.ToObject<Data>(dataJson);
         _health = data.health;

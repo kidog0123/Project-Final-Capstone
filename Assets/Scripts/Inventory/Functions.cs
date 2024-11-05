@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Tools : MonoBehaviour
+public class Functions : MonoBehaviour
 {
     public static void SetLayerMask(Transform root, int layer)
     {
