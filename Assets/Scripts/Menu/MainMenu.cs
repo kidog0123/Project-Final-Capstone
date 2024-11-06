@@ -15,7 +15,7 @@ public class MainMenu : Panel
 
     [SerializeField] public TextMeshProUGUI nameText = null;
     [SerializeField] private Button logoutButton = null;
-    //[SerializeField] private Button leaderboardsButton = null;
+    [SerializeField] private Button leaderboardsButton = null;
     //[SerializeField] private Button friendsButton = null;
     //[SerializeField] private Button renameButton = null;
     //[SerializeField] private Button customizationButton = null;
@@ -31,11 +31,11 @@ public class MainMenu : Panel
             return;
         }
         logoutButton.onClick.AddListener(SignOut);
-        //leaderboardsButton.onClick.AddListener(Leaderboards);
+        leaderboardsButton.onClick.AddListener(Leaderboards);
         //friendsButton.onClick.AddListener(Friends);
         //renameButton.onClick.AddListener(RenamePlayer);
         //customizationButton.onClick.AddListener(Customization);
-       // lobbyButton.onClick.AddListener(Lobby);
+        // lobbyButton.onClick.AddListener(Lobby);
         base.Initialize();
     }
 
@@ -100,6 +100,7 @@ public class MainMenu : Panel
 
     private void Customization()
     {
+        PanelManager.CloseAll();
         PanelManager.Open("customization");
     }
 
@@ -128,7 +129,7 @@ public class MainMenu : Panel
     //{
     //    if (result == ActionConfirmMenu.Result.Positive)
     //    {
-    //        MenuManager.Singleton.SignOut();
+    //        MenuManager12.Singleton.SignOut();
     //        isFriendsServiceInitialized = false;
     //    }
     //}
@@ -140,11 +141,13 @@ public class MainMenu : Panel
 
     private void Leaderboards()
     {
+        PanelManager.CloseAll();
         PanelManager.Open("leaderboards");
     }
 
     private void Friends()
     {
+        PanelManager.CloseAll();
         PanelManager.Open("friends");
     }
 
