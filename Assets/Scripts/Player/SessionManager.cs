@@ -6,7 +6,7 @@ using LitJson;
 using UnityEngine.TextCore.Text;
 using UnityEditor;
 using Unity.Netcode.Transports.UTP;
-using DevelopersHub.RealtimeNetworking.Client;
+
 
 
 
@@ -46,10 +46,10 @@ public class SessionManager : NetworkBehaviour
     private void Start()
     {
         UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        transport.ConnectionData.Address = Client.instance.settings.ip;
+        
         if (role == Role.Server)
         {
-            _port = (ushort)DevelopersHub.RealtimeNetworking.Client.Tools.FindFreeTcpPort();
+           
             transport.ConnectionData.Port = _port;
             StartServer();
         }
@@ -118,7 +118,7 @@ public class SessionManager : NetworkBehaviour
     {
         yield return new WaitForEndOfFrame();
         yield return new WaitForSeconds(2f);
-        RealtimeNetworking.NetcodeServerIsReady(_port);
+        
     }
     private void CloseServer()
     {
@@ -129,7 +129,7 @@ public class SessionManager : NetworkBehaviour
                 return;
             }
             _closingServer = true;
-            RealtimeNetworking.NetcodeCloseServer();
+            
         }
     }
     private void OnClientConnected(ulong clientId)
