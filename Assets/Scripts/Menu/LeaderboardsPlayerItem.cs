@@ -30,8 +30,8 @@ public class LeaderboardsPlayerItem : MonoBehaviour
 
     private void Clicked()
     {
-        // PlayerProfileMenu panel = (PlayerProfileMenu)PanelManager.GetSingleton("player_profile");
-        //panel.Open(player.PlayerId, player.PlayerName);
+        PlayerProfileMenu panel = (PlayerProfileMenu)PanelManager.GetSingleton("player_profile");
+        panel.Open(player.PlayerId, player.PlayerName);
         Debug.Log("Open file:" + player.PlayerName);
     }
 
