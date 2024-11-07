@@ -12,12 +12,7 @@ using Unity.Netcode.Transports.UTP;
 
 public class SessionManager : NetworkBehaviour
 {
-    private float _destroyServerAfterSecondsIfNoClientConnected = 300;
-    private float _destroyServerAfterSecondsWithoutAnyClient = 120;
-    private float _timer = 0;
-    private int _connectedClients = 0;
-    private bool _atLeastOneClientConnected = false;
-    private bool _closingServer = false;
+   
     private static SessionManager _singleton = null;
     public static SessionManager singleton
     {
@@ -30,72 +25,15 @@ public class SessionManager : NetworkBehaviour
             return _singleton;
         }
     }
-
     private Dictionary<ulong, Character> _characters = new Dictionary<ulong, Character>();
-
-    private static Role _role = Role.Client; public static Role role { get { return _role; } set { _role = value; } }
-    private static ushort _port = 0; public static ushort port { get { return _port; } set { _port = value; } }
-    private static long _accountID = 0; public static long accountID { get { return _port; } set { _accountID = value; } }
-
-    public enum Role
-    {
-        Server = 1, Client = 2
-    }
-
-
-    private void Start()
-    {
-        UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        
-        if (role == Role.Server)
-        {
-           
-            transport.ConnectionData.Port = _port;
-            StartServer();
-        }
-        else
-        {
-            transport.ConnectionData.Port = _port;
-            StartClient();
-        }
-    }
     private void Update()
     {
-        if (role == Role.Server)    
-        {
-            if (_closingServer)
-            {
-                return;
-            }
-            if (_atLeastOneClientConnected) //nếu có ít nhất 1 client đã kết nối với server
-            {
-                if (_connectedClients > 0) //nếu hiện có client kết nối server thì ko cần đếm thời gian
-                {
-                    _timer = 0;
-                }
-                else                     // nếu chưa thì đếm thời gian
-                {                       // hết thời gian mà ko có client kết nối thì hủy server
-                    _timer += Time.deltaTime;
-                    if (_timer >= _destroyServerAfterSecondsWithoutAnyClient) 
-                    {
-                        CloseServer();
-                    }
-                }
-            }
-            else //nếu chưa có client nào kết nối với server thì bắt đầu đếm thời gian
-            {   // hết thời gian mà không có client kết nối thì hủy server
-                _destroyServerAfterSecondsIfNoClientConnected -= Time.deltaTime;        
-                if (_destroyServerAfterSecondsIfNoClientConnected <= 0)
-                {
-                    CloseServer();
-                }
-            }
-        }
+       
     }
     public void StartServer()
     {
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+        
        
         NetworkManager.Singleton.StartServer();
 
@@ -108,34 +46,14 @@ public class SessionManager : NetworkBehaviour
                 allItems[i].ServerInitialize();
             }
         }
-        StartCoroutine(InformClients());
+     
     }
-    private void OnClientDisconnect(ulong clientId)
-    {
-        _connectedClients--;
-    }
-    private IEnumerator InformClients()
-    {
-        yield return new WaitForEndOfFrame();
-        yield return new WaitForSeconds(2f);
-        
-    }
-    private void CloseServer()
-    {
-        if (_role == Role.Server)
-        {
-            if (_closingServer)
-            {
-                return;
-            }
-            _closingServer = true;
-            
-        }
-    }
+    
+    
+   
     private void OnClientConnected(ulong clientId)
     {
-        _connectedClients++;
-        _atLeastOneClientConnected = true;
+       
         ulong[] target = new ulong[1];
         target[0] = clientId;
         ClientRpcParams clientRpcParams = default;
