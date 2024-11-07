@@ -6,8 +6,9 @@ using TMPro;
 
 public class CanvasManager : MonoBehaviour
 {
-   
 
+    [SerializeField] private Button _serverButton = null;
+    [SerializeField] private Button _clientButton = null;
     [Header("Player UI")]
     [SerializeField] public TextMeshProUGUI _playerName = null;
     [SerializeField] public TextMeshProUGUI _healthText = null;
@@ -83,6 +84,10 @@ public class CanvasManager : MonoBehaviour
     }
     private void Start()
     {
+
+        _serverButton.onClick.AddListener(StartServer);
+        _clientButton.onClick.AddListener(StartClient);
+
         _inventoryCloseButton.onClick.AddListener(CloseInventory);
 
 
@@ -152,7 +157,19 @@ public class CanvasManager : MonoBehaviour
 
     }
 
+    private void StartServer()
+    {
+        _serverButton.gameObject.SetActive(false);
+        _clientButton.gameObject.SetActive(false);
+        SessionManager.singleton.StartServer();
+    }
 
+    private void StartClient()
+    {
+        _serverButton.gameObject.SetActive(false);
+        _clientButton.gameObject.SetActive(false);
+        SessionManager.singleton.StartClient();
+    }
     private void OnItemToPickUpdated()
     {
         if (_itemToPick != null)
@@ -347,10 +364,21 @@ public class CanvasManager : MonoBehaviour
         {
             _healthText.text = Character.localPlayer.health.ToString();
             _playerName.text = Character.localPlayer.id.ToString();
-            _weaponNameText.text = Character.localPlayer.weapon.id.ToString();
-            _ammoInWeaponText.text = Character.localPlayer.weapon.GetAmount().ToString();
-            _ammoClipSizeText.text = Character.localPlayer.weapon.clipSize.ToString();
-            _AmmoIDText.text = Character.localPlayer.weapon.ammoID.ToString();
+            if(Character.localPlayer.weapon != null)
+            {
+                _weaponNameText.text = Character.localPlayer.weapon.id.ToString();
+                _ammoInWeaponText.text = Character.localPlayer.weapon.GetAmount().ToString();
+                _ammoClipSizeText.text = Character.localPlayer.weapon.clipSize.ToString();
+                _AmmoIDText.text = Character.localPlayer.weapon.ammoID.ToString();
+            }
+            else
+            {
+                _weaponNameText.text = "";
+                _ammoInWeaponText.text = "";
+                _ammoClipSizeText.text = "";
+                _AmmoIDText.text = "";
+            }
+
 
         }
     }
