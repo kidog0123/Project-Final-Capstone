@@ -6,7 +6,7 @@ using UnityEngine;
 using TMPro;
 using Unity.Services.Authentication;
 using UnityEngine.UI;
-//using Unity.Services.Friends;
+using Unity.Services.Friends;
 //using Unity.Services.Lobbies;
 //using Unity.Services.Lobbies.Models;
 
@@ -16,7 +16,7 @@ public class MainMenu : Panel
     [SerializeField] public TextMeshProUGUI nameText = null;
     [SerializeField] private Button logoutButton = null;
     [SerializeField] private Button leaderboardsButton = null;
-    //[SerializeField] private Button friendsButton = null;
+    [SerializeField] private Button friendsButton = null;
     //[SerializeField] private Button renameButton = null;
     //[SerializeField] private Button customizationButton = null;
     //[SerializeField] private Button lobbyButton = null;
@@ -32,7 +32,7 @@ public class MainMenu : Panel
         }
         logoutButton.onClick.AddListener(SignOut);
         leaderboardsButton.onClick.AddListener(Leaderboards);
-        //friendsButton.onClick.AddListener(Friends);
+        friendsButton.onClick.AddListener(Friends);
         //renameButton.onClick.AddListener(RenamePlayer);
         //customizationButton.onClick.AddListener(Customization);
         // lobbyButton.onClick.AddListener(Lobby);
@@ -41,12 +41,12 @@ public class MainMenu : Panel
 
     public override void Open()
     {
-        //friendsButton.interactable = isFriendsServiceInitialized;
+        friendsButton.interactable = isFriendsServiceInitialized;
         UpdatePlayerNameUI();
-        //if (isFriendsServiceInitialized == false)
-        //{
-        //    InitializeFriendsServiceAsync();
-        //}
+        if (isFriendsServiceInitialized == false)
+        {
+            InitializeFriendsServiceAsync();
+        }
         base.Open();
     }
 
@@ -100,23 +100,23 @@ public class MainMenu : Panel
 
     private void Customization()
     {
-        PanelManager.CloseAll();
+        
         PanelManager.Open("customization");
     }
 
-    //private async void InitializeFriendsServiceAsync()
-    //{
-    //    try
-    //    {
-    //        await FriendsService.Instance.InitializeAsync();
-    //        isFriendsServiceInitialized = true;
-    //        friendsButton.interactable = true;
-    //    }
-    //    catch (Exception exception)
-    //    {
-    //        Debug.Log(exception.Message);
-    //    }
-    //}
+    private async void InitializeFriendsServiceAsync()
+    {
+        try
+        {
+            await FriendsService.Instance.InitializeAsync();
+            isFriendsServiceInitialized = true;
+            friendsButton.interactable = true;
+        }
+        catch (Exception exception)
+        {
+            Debug.Log(exception.Message);
+        }
+    }
 
     private void SignOut()
     {
@@ -141,13 +141,13 @@ public class MainMenu : Panel
 
     private void Leaderboards()
     {
-        PanelManager.CloseAll();
+        
         PanelManager.Open("leaderboards");
     }
 
     private void Friends()
     {
-        PanelManager.CloseAll();
+        
         PanelManager.Open("friends");
     }
 
