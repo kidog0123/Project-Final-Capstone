@@ -6,13 +6,26 @@ using LitJson;
 using UnityEngine.TextCore.Text;
 using UnityEditor;
 using Unity.Netcode.Transports.UTP;
+using Unity.Services.Authentication;
+using Unity.Services.CloudSave;
+using Unity.Services.CloudSave.Models.Data.Player;
+using Unity.Services.Lobbies;
+using Unity.Services.Lobbies.Models;
+using System;
 
 
 
 
 public class SessionManager : NetworkBehaviour
 {
-   
+    public static Role role = Role.Client;
+    public static string joinCode = "";
+    public static string lobbyID = "";
+
+    public enum Role
+    {
+        Client = 1, Host = 2, Server = 3
+    }
     private static SessionManager _singleton = null;
     public static SessionManager singleton
     {
@@ -21,11 +34,50 @@ public class SessionManager : NetworkBehaviour
             if (_singleton == null)
             {
                 _singleton = FindFirstObjectByType<SessionManager>();
+                _singleton.Initialize();
+
             }
             return _singleton;
         }
     }
+    private bool initialized = false;
+
+    private void Initialize()
+    {
+        if (initialized) { return; }
+        initialized = true;
+    }
+
+    public override void OnDestroy()
+    {
+        if (_singleton == this)
+        {
+            _singleton = null;
+        }
+        base.OnDestroy();
+    }
     private Dictionary<ulong, Character> _characters = new Dictionary<ulong, Character>();
+    private void Start() // Do not do this in Awake
+    {
+        Initialize();
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        if (role == Role.Client)
+        {
+            NetworkManager.Singleton.StartClient();
+        }
+        else if (role == Role.Host)
+        {
+            NetworkManager.Singleton.StartHost();
+            if (string.IsNullOrEmpty(joinCode) == false && string.IsNullOrEmpty(lobbyID) == false)
+            {
+                SetLobbyJoinCode(joinCode);
+            }
+        }
+        else
+        {
+            NetworkManager.Singleton.StartServer();
+        }
+    }
     private void Update()
     {
        
@@ -73,15 +125,15 @@ public class SessionManager : NetworkBehaviour
         Character prefab = PrefabManager.singleton.GetCharacterPrefab("Player");
         if (prefab != null)
         {
-            Vector3 position = new Vector3(Random.Range(-5,5),0f,Random.Range(-5,5));
+            Vector3 position = SessionSpawnPoints.Singleton.GetSpawnPositionOrdered();
 
             Character character = Instantiate(prefab,position,Quaternion.identity);
             character.GetComponent<Unity.Netcode.NetworkObject>().SpawnWithOwnership(serverRpcParams.Receive.SenderClientId);
 
             _characters.Add(serverRpcParams.Receive.SenderClientId, character);
-
-
+            
             Dictionary<string,(string,int)> items = new Dictionary<string,(string,int)> { {"0",( "QBZ95", 0) }, { "1", ("AK74", 0) }, { "2", ("7.62x39mm", 2000) } };
+            
             List<string> itemsId = new List<string>();
             List<string> equippedIds = new List<string>();
 
@@ -138,6 +190,22 @@ public class SessionManager : NetworkBehaviour
     {
         NetworkManager.Singleton.StartClient();
     }
+    private async void SetLobbyJoinCode(string code)
+    {
+        try
+        {
+            UpdateLobbyOptions options = new UpdateLobbyOptions();
+            options.Data = new Dictionary<string, DataObject>();
+            options.Data.Add("join_code", new DataObject(visibility: DataObject.VisibilityOptions.Public, value: code));
+            var lobby = await LobbyService.Instance.UpdateLobbyAsync(lobbyID, options);
+        }
+        catch (Exception exception)
+        {
+            Debug.Log(exception.Message);
+        }
+    }
+
+    //Trade Item
 
     [System.Serializable]
     public struct TradeItemData
