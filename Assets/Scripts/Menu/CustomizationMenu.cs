@@ -49,9 +49,12 @@ public class CustomizationMenu : Panel
     private int weapon1Current = 0;
     private int weapon2Current = 0;
 
-    public Character _character;
+    private Character _character;
+    private Weapon _weapon1;
+    private Weapon _weapon2;
     public override void Initialize()
     {
+
         if (IsInitialized)
         {
             return;
@@ -71,10 +74,7 @@ public class CustomizationMenu : Panel
         _weapon2Camera.enabled = true;
         base.Open();
 
-        ShowCharacter(characterCurrent);
 
-
-        
         LoadData();
     }
     private void ClosePanel()
@@ -84,6 +84,7 @@ public class CustomizationMenu : Panel
         _weapon2Camera.enabled = false;
         Close();
         ClearCharacter();
+        ClearWeapon(3);
 
     }
 
@@ -117,6 +118,9 @@ public class CustomizationMenu : Panel
             Debug.Log(exception.Message);
         }
 
+        ShowCharacter(characterCurrent);
+        ShowWeapon1(weapon1Current);
+        ShowWeapon2(weapon2Current);
         weapon1Button.interactable = true;
         weapon2Button.interactable = true;
         ApplyData();
@@ -170,24 +174,26 @@ public class CustomizationMenu : Panel
 
     private void ChangeWeapon1()
     {
-
+        ClearWeapon(1);
         weapon1Current++;
         if (weapon1Current >= PrefabManager.singleton.WeaponCount())
         {
             weapon1Current = 0;
         }
-        Debug.Log("weapon 1 : " + weapon1Current);
+        Debug.Log("weapon 1: " + PrefabManager.singleton.GetWeaponPrefabByCount(weapon1Current).id);
+        ShowWeapon1(weapon1Current);
         ApplyData();
     }
     private void ChangeWeapon2()
     {
-
+        ClearWeapon(2);
         weapon2Current++;
         if (weapon2Current >= PrefabManager.singleton.WeaponCount())
         {
             weapon2Current = 0;
         }
-        Debug.Log("weapon 2: " + weapon2Current);
+        Debug.Log("weapon 2: " + PrefabManager.singleton.GetWeaponPrefabByCount(weapon2Current).id);
+        ShowWeapon2(weapon2Current);
         ApplyData();
     }
 
@@ -202,7 +208,7 @@ public class CustomizationMenu : Panel
                 Destroy(_character.gameObject);
             }
              _character = Instantiate(prefabs, _characterSpawnPoint.position, _characterSpawnPoint.rotation);
-
+            
             CharacterController _controller = _character.GetComponent<CharacterController>();
             StarterAssetsInputs _input = _character.GetComponent<StarterAssetsInputs>();
             PlayerInput _playerInput = _character.GetComponent<PlayerInput>();
@@ -226,13 +232,71 @@ public class CustomizationMenu : Panel
             
         }
     }
-    
+
+    private void ShowWeapon1(int weapon1)
+    {
+        Weapon prefabs = PrefabManager.singleton.GetWeaponPrefabByCount(weapon1);
+        if (prefabs != null)
+        {
+            if (_weapon1 != null)
+            {
+                Destroy(_weapon1.gameObject);
+            }
+            _weapon1 = Instantiate(prefabs,_weapon1SpawnPoint.position,_weapon1SpawnPoint.rotation);
+
+            _weapon1.gameObject.GetComponent<Rigidbody>().useGravity = false;
+
+        }
+    }
+    private void ShowWeapon2(int weapon2)
+    {
+        Weapon prefabs = PrefabManager.singleton.GetWeaponPrefabByCount(weapon2);
+        if (prefabs != null)
+        {
+            if (_weapon2 != null)
+            {
+                Destroy(_weapon2.gameObject);
+            }
+            _weapon2 = Instantiate(prefabs, _weapon2SpawnPoint.position, _weapon2SpawnPoint.rotation);
+
+            _weapon2.gameObject.GetComponent<Rigidbody>().useGravity = false;
+
+
+
+        }
+    }
     private void ClearCharacter()
     {
         if(_character != null)
         {
             Destroy(_character.gameObject);
             _character = null;
+        }
+    }
+    private void ClearWeapon(int i)
+    {
+        if(i == 1)
+        {
+            if(_weapon1 != null)
+            {
+                Destroy( _weapon1.gameObject);
+                _weapon1 = null;
+            }
+        }
+        else if(i == 2)
+        {
+            if( _weapon2 != null)
+            {
+                Destroy( _weapon2.gameObject);
+                _weapon2 = null;
+            }
+        }
+        else
+        {
+            Destroy(_weapon1.gameObject);
+            Destroy(_weapon2.gameObject);
+            _weapon1 = null;
+            _weapon2 = null;
         }
     }
     private void ApplyData()
