@@ -14,7 +14,7 @@ using static UnityEngine.ParticleSystem;
 
 public class Character : NetworkBehaviour
 {
-    
+    [SerializeField] private NetworkPrefabsList weaponPrefab = null;
     [SerializeField] private string _id = ""; public string id {  get { return _id; } }
     [SerializeField] private Transform _weaponHolder = null;
     [Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
@@ -25,7 +25,7 @@ public class Character : NetworkBehaviour
     [Tooltip("The radius of the grounded check. Should match the radius of the CharacterController")]
     public float GroundedRadius = 0.28f;
 
-    [Tooltip("What layers the character uses as ground")]
+    [Tooltip("What layers the characterCurrent uses as ground")]
     public LayerMask GroundLayers;
 
     private Weapon _weapon = null; public Weapon weapon { get { return _weapon; } }
@@ -180,6 +180,53 @@ public class Character : NetworkBehaviour
         _networkObject.DontDestroyWithOwner = false;
     }
 
+    //public void InitializeDummy(string weaponID)
+    //{
+    //    InitializeCompoments();
+    //    if (_weapon != null)
+    //    {
+    //        Destroy(_weapon.gameObject);
+    //        _weapon = null;
+    //    }
+    //    Item prefab = PrefabManager.singleton.GetItemPrefab(weaponID);
+    //    if (prefab != null && prefab.GetType() == typeof(Weapon))
+    //    {
+    //        Item item = Instantiate(prefab, transform);
+    //        item.Initialize();
+    //        item.SetOnGroundStatus(false);
+    //        Weapon w = (Weapon)item;
+    //        item.transform.SetParent(_weaponHolder);
+    //        item.transform.localPosition = w.rightHandPosition;
+    //        item.transform.localEulerAngles = w.rightHandRotation;
+    //        _rigManager.SetLeftHandGripData(w.leftHandPosition, w.leftHandRotaion);
+    //        _weapon = w;
+    //    }
+
+
+    //}
+    public void InitializeDummy(string weaponID)
+    {
+        InitializeCompoments();
+        if (_weapon != null)
+        {
+            Destroy(_weapon.gameObject);
+            _weapon = null;
+        }
+        Item prefab = PrefabManager.singleton.GetItemPrefab(weaponID);
+        
+        if (prefab != null && prefab.GetType() == typeof(Weapon))
+        {
+            Item item = Instantiate(prefab, transform);
+            item.Initialize();
+            item.SetOnGroundStatus(false);
+            Weapon w = (Weapon)item;
+            item.transform.SetParent(_weaponHolder);
+            item.transform.localPosition = w.rightHandPosition;
+            item.transform.localEulerAngles = w.rightHandRotation;
+            _rigManager.SetLeftHandGripData(w.leftHandPosition, w.leftHandRotaion);
+            _weapon = w;
+        }
+    }
     public void InitiaLizeServer(Dictionary<string, (string, int)> items, List<string> itemsId,List<string> equippedIds, ulong clientID)
     {
         if (_initialized)

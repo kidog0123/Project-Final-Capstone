@@ -1,23 +1,23 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using Unity.Mathematics;
 using Unity.Netcode;
-using LitJson;
-using UnityEngine.TextCore.Text;
-using UnityEditor;
-using Unity.Netcode.Transports.UTP;
 using Unity.Services.Authentication;
 using Unity.Services.CloudSave;
 using Unity.Services.CloudSave.Models.Data.Player;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
-using System;
-
-
-
+using UnityEngine;
+using LitJson;
 
 public class SessionManager : NetworkBehaviour
 {
+
+    [SerializeField] private NetworkPrefabsList charactersPrefab = null; // Use this one
+    [SerializeField] private NetworkPrefabsList weaponPrefab = null; // Use this one
+    private Dictionary<ulong, Character> _characters = new Dictionary<ulong, Character>(); // Remove this one
+
     public static Role role = Role.Client;
     public static string joinCode = "";
     public static string lobbyID = "";
@@ -26,20 +26,21 @@ public class SessionManager : NetworkBehaviour
     {
         Client = 1, Host = 2, Server = 3
     }
-    private static SessionManager _singleton = null;
-    public static SessionManager singleton
+
+    private static SessionManager singleton = null;
+    public static SessionManager Singleton
     {
         get
         {
-            if (_singleton == null)
+            if (singleton == null)
             {
-                _singleton = FindFirstObjectByType<SessionManager>();
-                _singleton.Initialize();
-
+                singleton = FindFirstObjectByType<SessionManager>();
+                singleton.Initialize();
             }
-            return _singleton;
+            return singleton;
         }
     }
+
     private bool initialized = false;
 
     private void Initialize()
@@ -50,13 +51,13 @@ public class SessionManager : NetworkBehaviour
 
     public override void OnDestroy()
     {
-        if (_singleton == this)
+        if (singleton == this)
         {
-            _singleton = null;
+            singleton = null;
         }
         base.OnDestroy();
     }
-    private Dictionary<ulong, Character> _characters = new Dictionary<ulong, Character>();
+
     private void Start() // Do not do this in Awake
     {
         Initialize();
@@ -77,97 +78,103 @@ public class SessionManager : NetworkBehaviour
         {
             NetworkManager.Singleton.StartServer();
         }
-    }
-    private void Update()
-    {
-       
-    }
-    public void StartServer()
-    {
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        
-       
-        NetworkManager.Singleton.StartServer();
-
-        Item[] allItems = FindObjectsByType<Item>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
-
-        if (allItems != null)
+        if (role != Role.Client)
         {
-            for (int i = 0; i < allItems.Length; i++)
+            Item[] allItems = FindObjectsByType<Item>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            if (allItems != null)
             {
-                allItems[i].ServerInitialize();
+                for (int i = 0; i < allItems.Length; i++)
+                {
+                    allItems[i].ServerInitialize();
+                }
             }
         }
-     
-    }
-    
-    
-   
-    private void OnClientConnected(ulong clientId)
-    {
-       
-        ulong[] target = new ulong[1];
-        target[0] = clientId;
-        ClientRpcParams clientRpcParams = default;
-        clientRpcParams.Send.TargetClientIds = target;
-        OnClientConnectedClientRpc(clientRpcParams);
     }
 
-    [ClientRpc]
-    public void OnClientConnectedClientRpc(ClientRpcParams rpcParams = default)
+    private void OnClientConnected(ulong id)
     {
-        long accountId = 0;
-        SpawnCharacterServerRpc(accountId);
+        if (NetworkManager.Singleton.IsServer)
+        {
+            RpcParams rpcParams = NetworkManager.Singleton.RpcTarget.Single(id, RpcTargetUse.Temp);
+            InitializeRpc(rpcParams);
+        }
     }
-    [ServerRpc(RequireOwnership = false)]
-    public void SpawnCharacterServerRpc(long accountID,ServerRpcParams serverRpcParams = default)
+
+    [Rpc(SendTo.SpecifiedInParams)]
+    private void InitializeRpc(RpcParams rpcParams)
     {
+        InitializeClient();
+    }
+
+    private async void InitializeClient()
+    {
+        int character = 0;
+        int weapon = 0;
+        try
+        {
+            var playerData = await CloudSaveService.Instance.Data.Player.LoadAsync(new HashSet<string> { "characterCurrent" }, new LoadOptions(new PublicReadAccessClassOptions()));
+            if (playerData.TryGetValue("characterCurrent", out var characterData))
+            {
+                var data = characterData.Value.GetAs<Dictionary<string, object>>();
+                character = int.Parse(data["type"].ToString());
+                weapon = int.Parse(data["weapon_index"].ToString());
+            }
+        }
+        catch (Exception exception)
+        {
+            Debug.Log(exception.Message);
+        }
+        InstantiateCharacterRpc(character, AuthenticationService.Instance.PlayerId, weapon);
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = false)]
+    private void InstantiateCharacterRpc(int characterID, string id, int weapon, RpcParams rpcParams = default)
+    {
+        Vector3 position = SessionSpawnPoints.Singleton.GetSpawnPositionOrdered();
         Character prefab = PrefabManager.singleton.GetCharacterPrefab("Player");
+        string weaponPrefabs = weaponPrefab.PrefabList[weapon].Prefab.GetComponent<Weapon>().id;
+
         if (prefab != null)
         {
-            Vector3 position = SessionSpawnPoints.Singleton.GetSpawnPositionOrdered();
+            // Vector3 position = new Vector3(UnityEngine.Random.Range(-5f, 5f), 0f, UnityEngine.Random.Range(-5f, 5f));
+            Character character = Instantiate(prefab, position, Quaternion.identity);
+            character.GetComponent<NetworkObject>().SpawnWithOwnership(rpcParams.Receive.SenderClientId);
 
-            Character character = Instantiate(prefab,position,Quaternion.identity);
-            character.GetComponent<Unity.Netcode.NetworkObject>().SpawnWithOwnership(serverRpcParams.Receive.SenderClientId);
+            _characters.Add(rpcParams.Receive.SenderClientId, character);
 
-            _characters.Add(serverRpcParams.Receive.SenderClientId, character);
-            
-            Dictionary<string,(string,int)> items = new Dictionary<string,(string,int)> { {"0",( "QBZ95", 0) }, { "1", ("AK74", 0) }, { "2", ("7.62x39mm", 2000) } };
-            
+            Dictionary<string, (string, int)> items = new Dictionary<string, (string, int)> { { "0", (weaponPrefabs, 0) },{ "1", ("7.62x39mm", 1000) } };
             List<string> itemsId = new List<string>();
             List<string> equippedIds = new List<string>();
-
-            for(int i = 0; i < items.Count; i++)
+            for (int i = 0; i < items.Count; i++)
             {
                 itemsId.Add(System.Guid.NewGuid().ToString());
             }
 
             string itemsJson = JsonMapper.ToJson(items);
             string itemsIdJson = JsonMapper.ToJson(itemsId);
-            string equippedIdsJson = JsonMapper.ToJson(equippedIds);
+            string equippedJson = JsonMapper.ToJson(equippedIds);
 
-            Item[] allitems = FindObjectsByType<Item>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            Item[] allItems = FindObjectsByType<Item>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
             List<Item.Data> itemsOnGround = new List<Item.Data>();
-            if(allitems != null)
+            if (allItems != null)
             {
-                for (int i  = 0; i < allitems.Length; i++)
+                for (int i = 0; i < allItems.Length; i++)
                 {
-                    if (string.IsNullOrEmpty(allitems[i].networkID))
+                    if (string.IsNullOrEmpty(allItems[i].networkID))
                     {
-                        allitems[i].networkID = System.Guid.NewGuid().ToString();
+                        allItems[i].networkID = System.Guid.NewGuid().ToString();
                     }
-                    if (allitems[i].transform.parent == null)
+                    if (allItems[i].transform.parent == null)
                     {
-                        itemsOnGround.Add(allitems[i].GetData());
+                        itemsOnGround.Add(allItems[i].GetData());
                     }
-
                 }
             }
-
             string itemsOnGroundJson = JsonMapper.ToJson(itemsOnGround);
 
-            character.InitiaLizeServer(items,itemsId,equippedIds,serverRpcParams.Receive.SenderClientId);
-            character.InitializeClientRPC(itemsJson,itemsIdJson,equippedIdsJson, itemsOnGroundJson, serverRpcParams.Receive.SenderClientId);
+
+            character.InitiaLizeServer(items, itemsId, equippedIds, rpcParams.Receive.SenderClientId);
+            character.InitializeClientRPC(itemsJson, itemsIdJson, equippedJson, itemsOnGroundJson, rpcParams.Receive.SenderClientId);
 
             foreach (var client in _characters)
             {
@@ -177,19 +184,34 @@ public class SessionManager : NetworkBehaviour
                     string json = JsonMapper.ToJson(data);
 
                     ulong[] target = new ulong[1];
-                    target[0] = serverRpcParams.Receive.SenderClientId;
+                    target[0] = rpcParams.Receive.SenderClientId;
                     ClientRpcParams clientRpcParams = default;
                     clientRpcParams.Send.TargetClientIds = target;
 
                     client.Value.InitializeClientRpc(json, client.Key, clientRpcParams);
                 }
             }
+
         }
+
+        //var prefab = charactersPrefab.PrefabList[characterCurrent].Prefab.GetComponent<NetworkObject>();
+        //var networkObject = NetworkManager.Singleton.SpawnManager.InstantiateAndSpawn(prefab, rpcParams.Receive.SenderClientId, true, true, false, position, quaternion.identity);
+        //SessionPlayer player = networkObject.GetComponent<SessionPlayer>();
+        //player.ApplyDataRpc(id, weapon);
+        //SessionPlayer[] players = FindObjectsByType<SessionPlayer>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+        //if (players != null)
+        //{
+        //    for (int i = 0; i < players.Length; i++)
+        //    {
+        //        if (players[i] != player)
+        //        {
+        //            players[i].ApplyDataRpc();
+        //        }
+        //    }
+        //}
+
     }
-    public void StartClient ()
-    {
-        NetworkManager.Singleton.StartClient();
-    }
+
     private async void SetLobbyJoinCode(string code)
     {
         try
@@ -204,8 +226,6 @@ public class SessionManager : NetworkBehaviour
             Debug.Log(exception.Message);
         }
     }
-
-    //Trade Item
 
     [System.Serializable]
     public struct TradeItemData
@@ -279,13 +299,12 @@ public class SessionManager : NetworkBehaviour
 
         Dictionary<string, int> serializable1To2 = JsonMapper.ToObject<Dictionary<string, int>>(character1To2Json);
         Dictionary<string, int> serializable2To1 = JsonMapper.ToObject<Dictionary<string, int>>(charactre2To1Json);
-
-        //Dictionary<string, int> items1To2 = new Dictionary<string, int>();
-        //Dictionary<string, (string, int)> splitItems1 = new Dictionary<string, (string, int)>();
-
-        //Dictionary<string, int> items2To1 = new Dictionary<string, int>();
-        //Dictionary<string, (string, int)> splitItems2 = new Dictionary<string, (string, int)>();
-
+        /*
+        Dictionary<string, int> items1To2 = new Dictionary<string, int>();
+        Dictionary<string, (string, int)> splitItems1 = new Dictionary<string, (string, int)>();
+        Dictionary<string, int> items2To1 = new Dictionary<string, int>();
+        Dictionary<string, (string, int)> splitItems2 = new Dictionary<string, (string, int)>();
+        */
         List<TradeItemData> items1To2 = new List<TradeItemData>();
         List<Item.Data> splitItems1 = new List<Item.Data>();
         List<TradeItemData> items2To1 = new List<TradeItemData>();
@@ -329,7 +348,6 @@ public class SessionManager : NetworkBehaviour
                         {
                             Item splitItem = Instantiate(prefab, transform);
                             splitItem.networkID = System.Guid.NewGuid().ToString();
-                            
                             splitItem.SetAmount(remained);
                             character1.AddItemToInventoryLocally(splitItem);
                             splitItems1.Add(splitItem.GetData());
@@ -367,7 +385,6 @@ public class SessionManager : NetworkBehaviour
                     items1To2.Add(data);
 
                     character1.RemoveItemFromInventoryLocally(character1.inventory[i]);
-                    
                     break;
                 }
             }
@@ -412,7 +429,6 @@ public class SessionManager : NetworkBehaviour
                             Item splitItem = Instantiate(prefab, transform);
                             splitItem.networkID = System.Guid.NewGuid().ToString();
                             splitItem.SetAmount(remained);
-
                             character2.AddItemToInventoryLocally(splitItem);
                             splitItems2.Add(splitItem.GetData());
                         }
@@ -432,7 +448,7 @@ public class SessionManager : NetworkBehaviour
                         }
                     }
 
-                    character1.AddItemToInventoryLocally(character2.inventory[i],merge);
+                    character1.AddItemToInventoryLocally(character2.inventory[i], merge);
 
                     TradeItemData data = new TradeItemData();
                     data.item = character2.inventory[i].GetData();
@@ -449,7 +465,6 @@ public class SessionManager : NetworkBehaviour
                     items2To1.Add(data);
 
                     character2.RemoveItemFromInventoryLocally(character2.inventory[i]);
-                    
                     break;
                 }
             }
@@ -494,15 +509,11 @@ public class SessionManager : NetworkBehaviour
             return;
         }
 
-        //Dictionary<string, int> items1To2 = JsonMapper.ToObject<Dictionary<string, int>>(json1To2);
-        //Dictionary<string, (string, int)> splitItems1 = JsonMapper.ToObject<Dictionary<string, (string, int)>>(json1Split);
-        //Dictionary<string, int> items2To1 = JsonMapper.ToObject<Dictionary<string, int>>(json2To1);
-        //Dictionary<string, (string, int)> splitItems2 = JsonMapper.ToObject<Dictionary<string, (string, int)>>(json2Split);
-
         List<TradeItemData> items1To2 = JsonMapper.ToObject<List<TradeItemData>>(json1To2);
         List<Item.Data> splitItems1 = JsonMapper.ToObject<List<Item.Data>>(json1Split);
         List<TradeItemData> items2To1 = JsonMapper.ToObject<List<TradeItemData>>(json2To1);
         List<Item.Data> splitItems2 = JsonMapper.ToObject<List<Item.Data>>(json2Split);
+
 
         foreach (var item in items1To2)
         {
@@ -549,7 +560,6 @@ public class SessionManager : NetworkBehaviour
             {
                 Item splitItem = Instantiate(prefab, transform);
                 splitItem.networkID = item.networkID;
-                
                 splitItem.SetAmount(item.value);
                 character1.AddItemToInventoryLocally(splitItem);
             }
@@ -563,6 +573,7 @@ public class SessionManager : NetworkBehaviour
                 if (character2.inventory[i].networkID == item.item.networkID)
                 {
                     character2.inventory[i].SetAmount(item.item.value);
+
                     Item merge = null;
                     if (item.merge && string.IsNullOrEmpty(item.mergeID) == false)
                     {
@@ -580,7 +591,7 @@ public class SessionManager : NetworkBehaviour
                         }
                     }
 
-                    character1.AddItemToInventoryLocally(character2.inventory[i],merge);
+                    character1.AddItemToInventoryLocally(character2.inventory[i], merge);
                     character2.RemoveItemFromInventoryLocally(character2.inventory[i]);
                     found = true;
                     break;
@@ -633,5 +644,4 @@ public class SessionManager : NetworkBehaviour
             }
         }
     }
-
 }

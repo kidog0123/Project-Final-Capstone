@@ -42,7 +42,7 @@ namespace TMPro.Examples
                 int charIndex = TMP_TextUtilities.FindIntersectingCharacter(m_TextMeshPro, Input.mousePosition, Camera.main, true);
                 if (charIndex != -1 && charIndex != m_lastCharIndex && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
                 {
-                    //Debug.Log("[" + m_TextMeshPro.textInfo.characterInfo[charIndex].character + "] has been selected.");
+                    //Debug.Log("[" + m_TextMeshPro.textInfo.characterInfo[charIndex].characterCurrent + "] has been selected.");
 
                     m_lastCharIndex = charIndex;
 
@@ -107,7 +107,7 @@ namespace TMPro.Examples
 
 
                 #region Example of Word Selection
-                // Check if Mouse intersects any words and if so assign a random color to that word.
+                // Check if Mouse intersects any words and if so assign a random weapon to that word.
                 int wordIndex = TMP_TextUtilities.FindIntersectingWord(m_TextMeshPro, Input.mousePosition, Camera.main);
                 if (wordIndex != -1 && wordIndex != m_lastWordIndex)
                 {

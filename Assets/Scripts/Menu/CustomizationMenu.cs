@@ -7,25 +7,49 @@ using Unity.Services.CloudSave;
 using Unity.Services.CloudSave.Models.Data.Player;
 using UnityEngine.UI;
 using SaveOptions = Unity.Services.CloudSave.Models.Data.Player.SaveOptions;
+using StarterAssets;
+using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
+using System.Drawing;
+using Unity.Netcode;
+using Unity.VisualScripting;
+using Unity.Mathematics;
 
 public class CustomizationMenu : Panel
 {
+    //[SerializeField]
+    //GameObject[] characterPrefabs;
+    //[SerializeField]
+    //GameObject[] weapons1Prefabs;
+    //[SerializeField]
+    //GameObject[] weapons2Prefabs;
 
-    [SerializeField] public TextMeshProUGUI characterText = null;
+    
+    
+    [SerializeField] public TextMeshProUGUI weapon1Text = null;
+    [SerializeField] public TextMeshProUGUI weapon2Text = null;
     [SerializeField] private Button characterButton = null;
-    [SerializeField] private Button colorButton = null;
+    [SerializeField] private Button weapon1Button = null;
+    [SerializeField] private Button weapon2Button = null;
     [SerializeField] private Button closeButton = null;
     [SerializeField] private Button saveButton = null;
 
-    private int savedColor = 0;
+    [SerializeField] private Transform _characterSpawnPoint = null;
+    [SerializeField] private Transform _weapon1SpawnPoint = null;
+    [SerializeField] private Transform _weapon2SpawnPoint = null;
+    [SerializeField] private Camera _characterCamera = null;
+    [SerializeField] private Camera _weapon1Camera = null;
+    [SerializeField] private Camera _weapon2Camera = null;
+
     private int savedCharacter = 0;
+    private int savedWeapon1 = 0;
+    private int savedWeapon2 = 0;
 
-    private int color = 0;
-    private int character = 0;
+    private int characterCurrent = 0;
+    private int weapon1Current = 0;
+    private int weapon2Current = 0;
 
-    private string[] characters = { "Cube", "Capsule", "Sphere" };
-    private Color[] colors = { Color.green, Color.red, Color.blue, Color.magenta, Color.cyan };
-
+    public Character _character;
     public override void Initialize()
     {
         if (IsInitialized)
@@ -34,65 +58,92 @@ public class CustomizationMenu : Panel
         }
         closeButton.onClick.AddListener(ClosePanel);
         characterButton.onClick.AddListener(ChangeCharacter);
-        colorButton.onClick.AddListener(ChangeColor);
+        weapon1Button.onClick.AddListener(ChangeWeapon1);
+        weapon2Button.onClick.AddListener(ChangeWeapon2);
         saveButton.onClick.AddListener(Save);
         base.Initialize();
     }
 
     public override void Open()
     {
+        _characterCamera.enabled = true;
+        _weapon1Camera.enabled = true;
+        _weapon2Camera.enabled = true;
         base.Open();
+
+        ShowCharacter(characterCurrent);
+
+
+        
         LoadData();
     }
+    private void ClosePanel()
+    {
+        _characterCamera.enabled = false;
+        _weapon1Camera.enabled = false;
+        _weapon2Camera.enabled = false;
+        Close();
+        ClearCharacter();
+
+    }
+
 
     private async void LoadData()
     {
-        characterText.text = "";
-        characterButton.interactable = false;
-        colorButton.interactable = false;
+        weapon1Text.text = "";
+        weapon2Text.text = "";
+        weapon2Button.interactable = false;
+        weapon1Button.interactable = false;
         saveButton.interactable = false;
-        character = 0;
-        color = 0;
-        savedCharacter = 0;
-        savedColor = 0;
+        weapon1Current = 0;
+        weapon2Current = 0;
+        savedWeapon1 = 0;
+        savedWeapon2 = 0;
         try
         {
-            var playerData = await CloudSaveService.Instance.Data.Player.LoadAsync(new HashSet<string> { "character" }, new LoadOptions(new PublicReadAccessClassOptions()));
-            if (playerData.TryGetValue("character", out var characterData))
+            var playerData = await CloudSaveService.Instance.Data.Player.LoadAsync(new HashSet<string> {"characterCurrent"}, new LoadOptions(new PublicReadAccessClassOptions()));
+            if (playerData.TryGetValue("characterCurrent", out var characterData))
             {
                 var data = characterData.Value.GetAs<Dictionary<string, object>>();
-                savedCharacter = int.Parse(data["type"].ToString());
-                savedColor = int.Parse(data["color_index"].ToString());
-                character = savedCharacter;
-                color = savedColor;
+                savedWeapon1 = int.Parse(data["type"].ToString());
+                savedWeapon1 = int.Parse(data["weapon1_index"].ToString());
+                savedWeapon2 = int.Parse(data["weapon2_index"].ToString());
+                weapon1Current = savedWeapon1;
+                weapon2Current = savedWeapon2;
             }
         }
         catch (Exception exception)
         {
             Debug.Log(exception.Message);
         }
-        characterButton.interactable = true;
-        colorButton.interactable = true;
+
+        weapon1Button.interactable = true;
+        weapon2Button.interactable = true;
         ApplyData();
     }
 
     private async void Save()
     {
         saveButton.interactable = false;
+
         characterButton.interactable = false;
-        colorButton.interactable = false;
+        weapon1Button.interactable = false;
+        weapon2Button.interactable = false;
         try
         {
             var playerData = new Dictionary<string, object>
             {
-                { "type", character },
-                { "color", "#" + ColorUtility.ToHtmlStringRGBA(colors[color]) },
-                { "color_index", color }
+
+                {"type",characterCurrent }  ,  
+                {"weapon1_index",weapon1Current }  ,  
+                {"weapon2_index",weapon2Current }    
             };
-            var data = new Dictionary<string, object> { { "character", playerData } };
+            var data = new Dictionary<string, object> { { "characterCurrent", playerData } };
             await CloudSaveService.Instance.Data.Player.SaveAsync(data, new SaveOptions(new PublicWriteAccessClassOptions()));
-            savedCharacter = character;
-            savedColor = color;
+
+            savedCharacter = characterCurrent;
+            savedWeapon1 = weapon1Current;
+            savedWeapon2 = weapon2Current;
         }
         catch (Exception exception)
         {
@@ -100,39 +151,99 @@ public class CustomizationMenu : Panel
             saveButton.interactable = true;
         }
         characterButton.interactable = true;
-        colorButton.interactable = true;
+        weapon1Button.interactable = true;
+        weapon2Button.interactable = true;
     }
 
     private void ChangeCharacter()
     {
-        character++;
-        if (character >= characters.Length)
+        ClearCharacter();
+        characterCurrent++;
+        if(characterCurrent >= PrefabManager.singleton.CharacterCount())
         {
-            character = 0;
-        }
+            characterCurrent = 0;
+        }       
+        Debug.Log("characterCurrent: " + characterCurrent);
+        ShowCharacter(characterCurrent);
         ApplyData();
     }
 
-    private void ChangeColor()
+    private void ChangeWeapon1()
     {
-        color++;
-        if (color >= colors.Length)
+
+        weapon1Current++;
+        if (weapon1Current >= PrefabManager.singleton.WeaponCount())
         {
-            color = 0;
+            weapon1Current = 0;
         }
+        Debug.Log("weapon 1 : " + weapon1Current);
+        ApplyData();
+    }
+    private void ChangeWeapon2()
+    {
+
+        weapon2Current++;
+        if (weapon2Current >= PrefabManager.singleton.WeaponCount())
+        {
+            weapon2Current = 0;
+        }
+        Debug.Log("weapon 2: " + weapon2Current);
         ApplyData();
     }
 
+   private void ShowCharacter(int character)
+    {
+        
+        Character prefabs = PrefabManager.singleton.GetCharacterPrefabByCount(character);
+        if(prefabs != null)
+        {
+            if(_character != null)
+            {
+                Destroy(_character.gameObject);
+            }
+             _character = Instantiate(prefabs, _characterSpawnPoint.position, _characterSpawnPoint.rotation);
+
+            CharacterController _controller = _character.GetComponent<CharacterController>();
+            StarterAssetsInputs _input = _character.GetComponent<StarterAssetsInputs>();
+            PlayerInput _playerInput = _character.GetComponent<PlayerInput>();
+            ThirdPersonController _tps = _character.GetComponent<ThirdPersonController>();
+            if (_tps != null)
+            {
+                Destroy(_tps);
+            }
+            if (_playerInput != null)
+            {
+                Destroy(_playerInput);
+            }
+            if (_input != null)
+            {
+                Destroy(_input);
+            }
+            if (_controller != null)
+            {
+                Destroy(_controller);
+            }
+            
+        }
+    }
+    
+    private void ClearCharacter()
+    {
+        if(_character != null)
+        {
+            Destroy(_character.gameObject);
+            _character = null;
+        }
+    }
     private void ApplyData()
     {
-        characterText.text = characters[character];
-        characterText.color = colors[color];
-        saveButton.interactable = character != savedCharacter || color != savedColor;
+        //weapon1Text.text = weapons1Prefabs.PrefabList[weapon1Current].Prefab.GetComponent<Weapon>().id;
+        //weapon2Text.text = weapons1Prefabs.PrefabList[weapon2Current].Prefab.GetComponent<Weapon>().id;
+
+        weapon1Text.text = PrefabManager.singleton.GetWeaponPrefabByCount(weapon1Current).id;
+        weapon2Text.text = PrefabManager.singleton.GetWeaponPrefabByCount(weapon2Current).id;
+        saveButton.interactable = characterCurrent != savedCharacter || weapon1Current != savedWeapon1 || weapon2Current != savedWeapon2;
     }
 
-    private void ClosePanel()
-    {
-        Close();
-    }
-
+    
 }

@@ -41,13 +41,13 @@ namespace LitJson
 
         internal JsonException (int c) :
             base (String.Format (
-                    "Invalid character '{0}' in input string", (char) c))
+                    "Invalid characterCurrent '{0}' in input string", (char) c))
         {
         }
 
         internal JsonException (int c, Exception inner_exception) :
             base (String.Format (
-                    "Invalid character '{0}' in input string", (char) c),
+                    "Invalid characterCurrent '{0}' in input string", (char) c),
                 inner_exception)
         {
         }

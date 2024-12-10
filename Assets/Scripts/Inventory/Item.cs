@@ -4,7 +4,7 @@ using UnityEngine;
 using Unity.Netcode;
 
 
-public class Item : MonoBehaviour
+public class Item : NetworkBehaviour
 {
     [Header("General")]
     [SerializeField] private string _id = "";public string id {  get { return _id; } }
@@ -88,7 +88,7 @@ public class Item : MonoBehaviour
         {
             if (_lastPosition != transform.position)
             {
-                SessionManager.singleton.UpdateItemPosition(this);
+                SessionManager.Singleton.UpdateItemPosition(this);
             }
             _lastPosition = transform.position;
         }
