@@ -7,8 +7,10 @@ using TMPro;
 public class CanvasManager : MonoBehaviour
 {
 
-    [SerializeField] private Button _serverButton = null;
-    [SerializeField] private Button _clientButton = null;
+    //[SerializeField] private Button _serverButton = null;
+    //[SerializeField] private Button _clientButton = null;
+
+
     [Header("Player UI")]
     [SerializeField] public TextMeshProUGUI _playerName = null;
     [SerializeField] public TextMeshProUGUI _healthText = null;
@@ -85,8 +87,8 @@ public class CanvasManager : MonoBehaviour
     private void Start()
     {
 
-        _serverButton.onClick.AddListener(StartServer);
-        _clientButton.onClick.AddListener(StartClient);
+        //_serverButton.onClick.AddListener(StartServer);
+        //_clientButton.onClick.AddListener(StartClient);
 
         _inventoryCloseButton.onClick.AddListener(CloseInventory);
 
@@ -157,19 +159,19 @@ public class CanvasManager : MonoBehaviour
 
     }
 
-    private void StartServer()
-    {
-        _serverButton.gameObject.SetActive(false);
-        _clientButton.gameObject.SetActive(false);
-        SessionManager.singleton.StartServer();
-    }
+    //private void StartServer()
+    //{
+    //    _serverButton.gameObject.SetActive(false);
+    //    _clientButton.gameObject.SetActive(false);
+    //    SessionManager.Singleton.StartServer();
+    //}
 
-    private void StartClient()
-    {
-        _serverButton.gameObject.SetActive(false);
-        _clientButton.gameObject.SetActive(false);
-        SessionManager.singleton.StartClient();
-    }
+    //private void StartClient()
+    //{
+    //    _serverButton.gameObject.SetActive(false);
+    //    _clientButton.gameObject.SetActive(false);
+    //    SessionManager.Singleton.StartClient();
+    //}
     private void OnItemToPickUpdated()
     {
         if (_itemToPick != null)
@@ -227,7 +229,7 @@ public class CanvasManager : MonoBehaviour
                 }
                 if (itemsToStore.Count > 0 || itemsToTake.Count > 0)
                 {
-                    SessionManager.singleton.TradeItemsBetweenCharacters(Character.localPlayer, _characterLootTarget, itemsToStore, itemsToTake);
+                    SessionManager.Singleton.TradeItemsBetweenCharacters(Character.localPlayer, _characterLootTarget, itemsToStore, itemsToTake);
                 }
             }
         }

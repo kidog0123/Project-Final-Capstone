@@ -21,7 +21,7 @@ public class StartingSessionMenu : Panel
         statusText.text = "Loading the game, please wait ...";
 
         string map = lobby.Data["map"].Value;
-        string sceneName = "Map1";
+        string sceneName = "Map";
         // ToDo: Set scene name based on map value
 
         allowSceneActivation = !waitForConfirmation;

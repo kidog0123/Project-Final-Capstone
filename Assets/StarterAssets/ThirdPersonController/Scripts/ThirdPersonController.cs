@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 
 #endif
 
-/* Note: animations are called via the controller for both the character and capsule using animator null checks
+/* Note: animations are called via the controller for both the characterCurrent and capsule using animator null checks
  */
 
 namespace StarterAssets
@@ -28,7 +28,7 @@ namespace StarterAssets
         public float AimRotationSpeed = 20f;
 
 
-        [Tooltip("How fast the character turns to face movement direction")]
+        [Tooltip("How fast the characterCurrent turns to face movement direction")]
         [Range(0.0f, 0.3f)]
         public float RotationSmoothTime = 0.12f;
 
@@ -44,7 +44,7 @@ namespace StarterAssets
         [Tooltip("The height the player can jump")]
         public float JumpHeight = 1.2f;
 
-        [Tooltip("The character uses its own gravity value. The engine default is -9.81f")]
+        [Tooltip("The characterCurrent uses its own gravity value. The engine default is -9.81f")]
         public float Gravity = -15.0f;
 
         [Space(10)]
@@ -499,8 +499,8 @@ namespace StarterAssets
         //    Color transparentGreen = new Color(0.0f, 1.0f, 0.0f, 0.35f);
         //    Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
 
-        //    if (Grounded) Gizmos.color = transparentGreen;
-        //    else Gizmos.color = transparentRed;
+        //    if (Grounded) Gizmos.weapon = transparentGreen;
+        //    else Gizmos.weapon = transparentRed;
 
         //    when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
         //    Gizmos.DrawSphere(

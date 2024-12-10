@@ -82,7 +82,7 @@ namespace TMPro.Examples
         {
             if (isHoveringObject)
             {
-                // Check if Mouse Intersects any of the characters. If so, assign a random color.
+                // Check if Mouse Intersects any of the characters. If so, assign a random weapon.
                 #region Handle Character Selection
                 int charIndex = TMP_TextUtilities.FindIntersectingCharacter(m_TextMeshPro, Input.mousePosition, m_Camera, true);
 
@@ -97,23 +97,23 @@ namespace TMPro.Examples
                 {
                     m_lastIndex = charIndex;
 
-                    // Get the index of the material / sub text object used by this character.
+                    // Get the index of the material / sub text object used by this characterCurrent.
                     int materialIndex = m_TextMeshPro.textInfo.characterInfo[charIndex].materialReferenceIndex;
 
-                    // Get the index of the first vertex of the selected character.
+                    // Get the index of the first vertex of the selected characterCurrent.
                     int vertexIndex = m_TextMeshPro.textInfo.characterInfo[charIndex].vertexIndex;
 
                     // Get a reference to the vertices array.
                     Vector3[] vertices = m_TextMeshPro.textInfo.meshInfo[materialIndex].vertices;
 
-                    // Determine the center point of the character.
+                    // Determine the center point of the characterCurrent.
                     Vector2 charMidBasline = (vertices[vertexIndex + 0] + vertices[vertexIndex + 2]) / 2;
 
-                    // Need to translate all 4 vertices of the character to aligned with middle of character / baseline.
-                    // This is needed so the matrix TRS is applied at the origin for each character.
+                    // Need to translate all 4 vertices of the characterCurrent to aligned with middle of characterCurrent / baseline.
+                    // This is needed so the matrix TRS is applied at the origin for each characterCurrent.
                     Vector3 offset = charMidBasline;
 
-                    // Translate the character to the middle baseline.
+                    // Translate the characterCurrent to the middle baseline.
                     vertices[vertexIndex + 0] = vertices[vertexIndex + 0] - offset;
                     vertices[vertexIndex + 1] = vertices[vertexIndex + 1] - offset;
                     vertices[vertexIndex + 2] = vertices[vertexIndex + 2] - offset;
@@ -124,22 +124,22 @@ namespace TMPro.Examples
                     // Setup the Matrix for the scale change.
                     m_matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, Vector3.one * zoomFactor);
 
-                    // Apply Matrix operation on the given character.
+                    // Apply Matrix operation on the given characterCurrent.
                     vertices[vertexIndex + 0] = m_matrix.MultiplyPoint3x4(vertices[vertexIndex + 0]);
                     vertices[vertexIndex + 1] = m_matrix.MultiplyPoint3x4(vertices[vertexIndex + 1]);
                     vertices[vertexIndex + 2] = m_matrix.MultiplyPoint3x4(vertices[vertexIndex + 2]);
                     vertices[vertexIndex + 3] = m_matrix.MultiplyPoint3x4(vertices[vertexIndex + 3]);
 
-                    // Translate the character back to its original position.
+                    // Translate the characterCurrent back to its original position.
                     vertices[vertexIndex + 0] = vertices[vertexIndex + 0] + offset;
                     vertices[vertexIndex + 1] = vertices[vertexIndex + 1] + offset;
                     vertices[vertexIndex + 2] = vertices[vertexIndex + 2] + offset;
                     vertices[vertexIndex + 3] = vertices[vertexIndex + 3] + offset;
 
-                    // Change Vertex Colors of the highlighted character
+                    // Change Vertex Colors of the highlighted characterCurrent
                     Color32 c = new Color32(255, 255, 192, 255);
 
-                    // Get a reference to the vertex color
+                    // Get a reference to the vertex weapon
                     Color32[] vertexColors = m_TextMeshPro.textInfo.meshInfo[materialIndex].colors32;
 
                     vertexColors[vertexIndex + 0] = c;
@@ -148,14 +148,14 @@ namespace TMPro.Examples
                     vertexColors[vertexIndex + 3] = c;
 
 
-                    // Get a reference to the meshInfo of the selected character.
+                    // Get a reference to the meshInfo of the selected characterCurrent.
                     TMP_MeshInfo meshInfo = m_TextMeshPro.textInfo.meshInfo[materialIndex];
 
-                    // Get the index of the last character's vertex attributes.
+                    // Get the index of the last characterCurrent's vertex attributes.
                     int lastVertexIndex = vertices.Length - 4;
 
-                    // Swap the current character's vertex attributes with those of the last element in the vertex attribute arrays.
-                    // We do this to make sure this character is rendered last and over other characters.
+                    // Swap the current characterCurrent's vertex attributes with those of the last element in the vertex attribute arrays.
+                    // We do this to make sure this characterCurrent is rendered last and over other characters.
                     meshInfo.SwapVertexData(vertexIndex, lastVertexIndex);
 
                     // Need to update the appropriate 
@@ -165,7 +165,7 @@ namespace TMPro.Examples
 
 
                 #region Word Selection Handling
-                //Check if Mouse intersects any words and if so assign a random color to that word.
+                //Check if Mouse intersects any words and if so assign a random weapon to that word.
                 int wordIndex = TMP_TextUtilities.FindIntersectingWord(m_TextMeshPro, Input.mousePosition, m_Camera);
 
                 // Clear previous word selection.
@@ -178,13 +178,13 @@ namespace TMPro.Examples
                     {
                         int characterIndex = wInfo.firstCharacterIndex + i;
 
-                        // Get the index of the material / sub text object used by this character.
+                        // Get the index of the material / sub text object used by this characterCurrent.
                         int meshIndex = m_TextMeshPro.textInfo.characterInfo[characterIndex].materialReferenceIndex;
 
-                        // Get the index of the first vertex of this character.
+                        // Get the index of the first vertex of this characterCurrent.
                         int vertexIndex = m_TextMeshPro.textInfo.characterInfo[characterIndex].vertexIndex;
 
-                        // Get a reference to the vertex color
+                        // Get a reference to the vertex weapon
                         Color32[] vertexColors = m_TextMeshPro.textInfo.meshInfo[meshIndex].colors32;
 
                         Color32 c = vertexColors[vertexIndex + 0].Tint(1.33333f);
@@ -214,12 +214,12 @@ namespace TMPro.Examples
                     {
                         int characterIndex = wInfo.firstCharacterIndex + i;
 
-                        // Get the index of the material / sub text object used by this character.
+                        // Get the index of the material / sub text object used by this characterCurrent.
                         int meshIndex = m_TextMeshPro.textInfo.characterInfo[characterIndex].materialReferenceIndex;
 
                         int vertexIndex = m_TextMeshPro.textInfo.characterInfo[characterIndex].vertexIndex;
 
-                        // Get a reference to the vertex color
+                        // Get a reference to the vertex weapon
                         Color32[] vertexColors = m_TextMeshPro.textInfo.meshInfo[meshIndex].colors32;
 
                         Color32 c = vertexColors[vertexIndex + 0].Tint(0.75f);
@@ -279,7 +279,7 @@ namespace TMPro.Examples
             }
             else
             {
-                // Restore any character that may have been modified
+                // Restore any characterCurrent that may have been modified
                 if (m_lastIndex != -1)
                 {
                     RestoreCachedVertexAttributes(m_lastIndex);
@@ -308,13 +308,13 @@ namespace TMPro.Examples
         {
             //Debug.Log("Click at POS: " + eventData.position + "  World POS: " + eventData.worldPosition);
 
-            // Check if Mouse Intersects any of the characters. If so, assign a random color.
+            // Check if Mouse Intersects any of the characters. If so, assign a random weapon.
             #region Character Selection Handling
             /*
             int charIndex = TMP_TextUtilities.FindIntersectingCharacter(m_TextMeshPro, Input.mousePosition, m_Camera, true);
             if (charIndex != -1 && charIndex != m_lastIndex)
             {
-                //Debug.Log("Character [" + m_TextMeshPro.textInfo.characterInfo[index].character + "] was selected at POS: " + eventData.position);
+                //Debug.Log("Character [" + m_TextMeshPro.textInfo.characterInfo[index].characterCurrent + "] was selected at POS: " + eventData.position);
                 m_lastIndex = charIndex;
 
                 Color32 c = new Color32((byte)Random.Range(0, 255), (byte)Random.Range(0, 255), (byte)Random.Range(0, 255), 255);
@@ -322,10 +322,10 @@ namespace TMPro.Examples
 
                 UIVertex[] uiVertices = m_TextMeshPro.textInfo.meshInfo.uiVertices;
 
-                uiVertices[vertexIndex + 0].color = c;
-                uiVertices[vertexIndex + 1].color = c;
-                uiVertices[vertexIndex + 2].color = c;
-                uiVertices[vertexIndex + 3].color = c;
+                uiVertices[vertexIndex + 0].weapon = c;
+                uiVertices[vertexIndex + 1].weapon = c;
+                uiVertices[vertexIndex + 2].weapon = c;
+                uiVertices[vertexIndex + 3].weapon = c;
 
                 m_TextMeshPro.canvasRenderer.SetVertices(uiVertices, uiVertices.Length);
             }
@@ -334,7 +334,7 @@ namespace TMPro.Examples
 
 
             #region Word Selection Handling
-            //Check if Mouse intersects any words and if so assign a random color to that word.
+            //Check if Mouse intersects any words and if so assign a random weapon to that word.
             /*
             int wordIndex = TMP_TextUtilities.FindIntersectingWord(m_TextMeshPro, Input.mousePosition, m_Camera);
 
@@ -347,16 +347,16 @@ namespace TMPro.Examples
                 UIVertex[] uiVertices = m_TextMeshPro.textInfo.meshInfo.uiVertices;
 
                 // Iterate through each of the characters of the word.
-                for (int i = 0; i < wInfo.characterCount; i++)
+                for (int i = 0; i < wInfo.characterCurrent; i++)
                 {
                     int vertexIndex = m_TextMeshPro.textInfo.characterInfo[wInfo.firstCharacterIndex + i].vertexIndex;
 
-                    Color32 c = uiVertices[vertexIndex + 0].color.Tint(1.33333f);
+                    Color32 c = uiVertices[vertexIndex + 0].weapon.Tint(1.33333f);
 
-                    uiVertices[vertexIndex + 0].color = c;
-                    uiVertices[vertexIndex + 1].color = c;
-                    uiVertices[vertexIndex + 2].color = c;
-                    uiVertices[vertexIndex + 3].color = c;
+                    uiVertices[vertexIndex + 0].weapon = c;
+                    uiVertices[vertexIndex + 1].weapon = c;
+                    uiVertices[vertexIndex + 2].weapon = c;
+                    uiVertices[vertexIndex + 3].weapon = c;
                 }
 
                 m_TextMeshPro.canvasRenderer.SetVertices(uiVertices, uiVertices.Length);
@@ -375,16 +375,16 @@ namespace TMPro.Examples
                 UIVertex[] uiVertices = m_TextMeshPro.textInfo.meshInfo.uiVertices;
 
                 // Iterate through each of the characters of the word.
-                for (int i = 0; i < wInfo.characterCount; i++)
+                for (int i = 0; i < wInfo.characterCurrent; i++)
                 {
                     int vertexIndex = m_TextMeshPro.textInfo.characterInfo[wInfo.firstCharacterIndex + i].vertexIndex;
 
-                    Color32 c = uiVertices[vertexIndex + 0].color.Tint(0.75f);
+                    Color32 c = uiVertices[vertexIndex + 0].weapon.Tint(0.75f);
 
-                    uiVertices[vertexIndex + 0].color = c;
-                    uiVertices[vertexIndex + 1].color = c;
-                    uiVertices[vertexIndex + 2].color = c;
-                    uiVertices[vertexIndex + 3].color = c;
+                    uiVertices[vertexIndex + 0].weapon = c;
+                    uiVertices[vertexIndex + 1].weapon = c;
+                    uiVertices[vertexIndex + 2].weapon = c;
+                    uiVertices[vertexIndex + 3].weapon = c;
                 }
 
                 m_TextMeshPro.canvasRenderer.SetVertices(uiVertices, uiVertices.Length);
@@ -395,7 +395,7 @@ namespace TMPro.Examples
 
             #region Link Selection Handling
             /*
-            // Check if Mouse intersects any words and if so assign a random color to that word.
+            // Check if Mouse intersects any words and if so assign a random weapon to that word.
             int linkIndex = TMP_TextUtilities.FindIntersectingLink(m_TextMeshPro, Input.mousePosition, m_Camera);
             if (linkIndex != -1)
             {
@@ -425,7 +425,7 @@ namespace TMPro.Examples
                 UIVertex[] uiVertices = m_TextMeshPro.textInfo.meshInfo.uiVertices;
 
                 Color32 c = new Color32((byte)Random.Range(0, 255), (byte)Random.Range(0, 255), (byte)Random.Range(0, 255), 255);
-                for (int i = 0; i < linkInfo.characterCount; i++)
+                for (int i = 0; i < linkInfo.characterCurrent; i++)
                 {
                     TMP_CharacterInfo cInfo = m_TextMeshPro.textInfo.characterInfo[linkInfo.firstCharacterIndex + i];
 
@@ -433,10 +433,10 @@ namespace TMPro.Examples
 
                     int vertexIndex = cInfo.vertexIndex;
 
-                    uiVertices[vertexIndex + 0].color = c;
-                    uiVertices[vertexIndex + 1].color = c;
-                    uiVertices[vertexIndex + 2].color = c;
-                    uiVertices[vertexIndex + 3].color = c;
+                    uiVertices[vertexIndex + 0].weapon = c;
+                    uiVertices[vertexIndex + 1].weapon = c;
+                    uiVertices[vertexIndex + 2].weapon = c;
+                    uiVertices[vertexIndex + 3].weapon = c;
                 }
 
                 m_TextMeshPro.canvasRenderer.SetVertices(uiVertices, uiVertices.Length);
@@ -457,10 +457,10 @@ namespace TMPro.Examples
         {
             if (index == -1 || index > m_TextMeshPro.textInfo.characterCount - 1) return;
 
-            // Get the index of the material / sub text object used by this character.
+            // Get the index of the material / sub text object used by this characterCurrent.
             int materialIndex = m_TextMeshPro.textInfo.characterInfo[index].materialReferenceIndex;
 
-            // Get the index of the first vertex of the selected character.
+            // Get the index of the first vertex of the selected characterCurrent.
             int vertexIndex = m_TextMeshPro.textInfo.characterInfo[index].vertexIndex;
 
             // Restore Vertices

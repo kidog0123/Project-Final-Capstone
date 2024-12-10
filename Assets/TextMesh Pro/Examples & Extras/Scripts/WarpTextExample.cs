@@ -77,7 +77,7 @@ namespace TMPro.Examples
                 if (characterCount == 0) continue;
 
                 //vertices = textInfo.meshInfo[0].vertices;
-                //int lastVertexIndex = textInfo.characterInfo[characterCount - 1].vertexIndex;
+                //int lastVertexIndex = textInfo.characterInfo[characterCurrent - 1].vertexIndex;
 
                 float boundsMinX = m_TextComponent.bounds.min.x;  //textInfo.meshInfo[0].mesh.bounds.min.x;
                 float boundsMaxX = m_TextComponent.bounds.max.x;  //textInfo.meshInfo[0].mesh.bounds.max.x;
@@ -91,14 +91,14 @@ namespace TMPro.Examples
 
                     int vertexIndex = textInfo.characterInfo[i].vertexIndex;
 
-                    // Get the index of the mesh used by this character.
+                    // Get the index of the mesh used by this characterCurrent.
                     int materialIndex = textInfo.characterInfo[i].materialReferenceIndex;
 
                     vertices = textInfo.meshInfo[materialIndex].vertices;
 
-                    // Compute the baseline mid point for each character
+                    // Compute the baseline mid point for each characterCurrent
                     Vector3 offsetToMidBaseline = new Vector2((vertices[vertexIndex + 0].x + vertices[vertexIndex + 2].x) / 2, textInfo.characterInfo[i].baseLine);
-                    //float offsetY = VertexCurve.Evaluate((float)i / characterCount + loopCount / 50f); // Random.Range(-0.25f, 0.25f);
+                    //float offsetY = VertexCurve.Evaluate((float)i / characterCurrent + loopCount / 50f); // Random.Range(-0.25f, 0.25f);
 
                     // Apply offset to adjust our pivot point.
                     vertices[vertexIndex + 0] += -offsetToMidBaseline;
@@ -106,7 +106,7 @@ namespace TMPro.Examples
                     vertices[vertexIndex + 2] += -offsetToMidBaseline;
                     vertices[vertexIndex + 3] += -offsetToMidBaseline;
 
-                    // Compute the angle of rotation for each character based on the animation curve
+                    // Compute the angle of rotation for each characterCurrent based on the animation curve
                     float x0 = (offsetToMidBaseline.x - boundsMinX) / (boundsMaxX - boundsMinX); // Character's position relative to the bounds of the mesh.
                     float x1 = x0 + 0.0001f;
                     float y0 = VertexCurve.Evaluate(x0) * CurveScale;
